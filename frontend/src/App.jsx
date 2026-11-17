@@ -14,6 +14,10 @@ import { api, getToken } from './api'
 
 
 
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
+
+const DOCS_URL = `${API_BASE.replace(/\/api\/?$/, '')}/docs`
+
 const money = value => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 2 }).format(value || 0)
 
 const getGreeting = () => {
@@ -218,7 +222,7 @@ function App() {
 
       })}</div>)}
 
-      <div className="sidebar-bottom"><div className="help-card"><div className="help-icon"><Activity size={17}/></div><strong>Need a hand?</strong><p>Check the API guide or contact your system administrator.</p><a href="http://localhost:8000/docs" target="_blank" rel="noreferrer">Open API docs ↗</a></div>
+      <div className="sidebar-bottom"><div className="help-card"><div className="help-icon"><Activity size={17}/></div><strong>Need a hand?</strong><p>Check the API guide or contact your system administrator.</p><a href={DOCS_URL} target="_blank" rel="noreferrer">Open API docs ↗</a></div>
 
         <div className="profile"><div className="avatar">{user.full_name?.split(' ').map(n=>n[0]).join('').slice(0,2)}</div><div className="profile-info"><strong>{user.full_name}</strong><span>{user.role}</span></div><button className="icon-btn" title="Sign out" onClick={logout}><LogOut size={17}/></button></div>
 
