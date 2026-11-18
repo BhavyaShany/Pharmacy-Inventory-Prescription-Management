@@ -16,7 +16,7 @@ dependencies = [
 # Vercel reads this to load the FastAPI instance and to build the frontend
 # before packaging the function.
 [tool.vercel]
-entrypoint = "server.py:app"
+entrypoint = "server:app"
 
 [tool.vercel.scripts]
 build = "npm ci --prefix frontend && npm run build --prefix frontend"
