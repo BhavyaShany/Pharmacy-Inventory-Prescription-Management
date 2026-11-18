@@ -107,7 +107,7 @@ def startup():
     finally:
         db.close()
 
-@app.get("/")
+@app.get("/api")
 def root():
     return {
         "service": "Pharmacy Inventory & Prescription API",
