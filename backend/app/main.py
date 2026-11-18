@@ -14,8 +14,7 @@ app = FastAPI(title="Pharmacy Inventory & Prescription API", version="1.0.0")
 origins = os.getenv("CORS_ORIGINS", "http://localhost:5173").split(",")
 app.add_middleware(CORSMiddleware, allow_origins=origins, allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
-@app.on_event("startup")
-def startup():
+def _seed_database():
     Base.metadata.create_all(bind=engine)
     db = next(get_db())
     try:
@@ -106,6 +105,16 @@ def startup():
             db.commit()
     finally:
         db.close()
+
+@app.on_event("startup")
+def startup():
+    # An unreachable database should not take the whole deployment down: the
+    # serverless function still has to serve the UI and report its own health.
+    try:
+        _seed_database()
+    except Exception as exc:
+        print(f"[startup] database seeding skipped: {exc}", flush=True)
+
 
 @app.get("/api")
 def root():
