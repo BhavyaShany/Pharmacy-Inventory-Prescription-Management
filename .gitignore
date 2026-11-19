@@ -33,3 +33,10 @@ Thumbs.db
 
 # Vercel CLI
 .vercel/
+
+# Local Cloudflare Workers state
+worker/.wrangler/
+.wrangler/
+
+# Deployment secrets (never commit)
+.sites/

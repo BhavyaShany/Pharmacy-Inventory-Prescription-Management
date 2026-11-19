@@ -1,7 +1,8 @@
 [project]
 name = "pharmacy-inventory-prescription-management"
 version = "1.0.0"
-requires-python = ">=3.13"
+description = "Pharmacy inventory and prescription management (FastAPI + React)"
+requires-python = ">=3.10"
 dependencies = [
     "fastapi==0.115.6",
     "SQLAlchemy==2.0.36",
@@ -12,11 +13,3 @@ dependencies = [
     "pydantic[email]==2.10.4",
     "python-dotenv==1.0.1",
 ]
-
-# Vercel reads this to load the FastAPI instance and to build the frontend
-# before packaging the function.
-[tool.vercel]
-entrypoint = "server:app"
-
-[tool.vercel.scripts]
-build = "npm ci --prefix frontend && npm run build --prefix frontend"

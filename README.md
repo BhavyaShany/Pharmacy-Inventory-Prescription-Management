@@ -35,6 +35,11 @@ pharmacy-inventory-prescription-management/
 │   └── vite.config.js
 ├── database/
 │   └── schema.sql
+├── worker/
+│   ├── index.js          # deployed API (Cloudflare Worker + D1)
+│   ├── wrangler.jsonc    # local Worker preview config
+│   └── README.md
+├── deploy.json           # deployment manifest (Worker + built frontend)
 └── docker-compose.yml
 ```
 
@@ -97,6 +102,8 @@ npm run dev
 
 Open the Vite URL shown in the terminal, usually `http://localhost:5173`.
 
+The frontend calls `http://localhost:8000/api` in development. To point it at a different backend, copy `frontend/.env.example` to `frontend/.env.development.local` and set `VITE_API_URL=http://localhost:PORT/api`. Development-only env files are git-ignored and are not loaded by a production build, which always uses the same-origin `/api` path, so a local URL can never leak into a deployment.
+
 ## Main workflows
 
 - Sign in using the demo admin account.
@@ -117,6 +124,44 @@ Open the Vite URL shown in the terminal, usually `http://localhost:5173`.
 | GET | `/api/customers` | List customers |
 | GET | `/api/suppliers` | List suppliers |
 | GET/POST | `/api/prescriptions` | List/create prescriptions |
+
+## Deployment
+
+Production URL: <https://pharmacy-inventory-prescription-management-3dqfk7.freebuff.site>  
+Preview URL: <https://pharmacy-inventory-prescription-management-3dqfk7-preview.freebuff.site>
+
+The app is deployed as one Cloudflare Worker (Freebuff Sites): `worker/index.js` serves the JSON API and the built React app from a single origin, with data in a D1 (SQLite) database bound as `DB`.
+
+- **Frontend** — `npm --prefix frontend run build` produces `frontend/dist`, uploaded as static assets.
+- **API** — `worker/index.js` implements the same endpoints as the FastAPI service, using D1 and WebCrypto (PBKDF2-SHA256 passwords, HS256 JWTs).
+- **Database** — D1. The Worker creates its tables and seeds the demo data on first request, so a fresh environment starts ready to use.
+- **Manifest** — `deploy.json` lists the Worker module and the asset directory.
+- **Configuration** — `SECRET_KEY` (JWT signing key) and optional `ACCESS_TOKEN_MINUTES`. Passwords use PBKDF2-SHA256; the Workers runtime caps PBKDF2 at 100,000 iterations.
+
+To redeploy after changing `worker/index.js` or the frontend:
+
+```bash
+npm --prefix frontend run build
+# then deploy deploy.json with the hosting tool
+```
+
+### Local Worker preview
+
+```bash
+npm --prefix frontend run build
+cd worker
+npx wrangler@3.99.0 dev --local --persist-to "$TEMP/pharmacy-d1"
+```
+
+The preview serves the API and the built UI on one port. On a OneDrive-synced folder, workerd cannot create its SQLite file inside the project, so keep `--persist-to` outside the synced directory.
+
+### FastAPI on Vercel
+
+`server.py`, `vercel.json` and the root `requirements.txt` are still in the repo, but a Vercel deployment needs an external MySQL server through `DATABASE_URL` — Vercel cannot host MySQL itself. The Worker deployment above is the one that runs without any external service.
+
+## Editor setup
+
+The project is editor-agnostic: no editor-specific settings are required. `.editorconfig` and `.gitattributes` keep encoding, indentation and line endings (UTF-8, LF) consistent in VS Code, Cursor, PyCharm, Zed, NeoVim or anything else. Python dependencies live in `backend/requirements.txt`, frontend dependencies in `frontend/package.json`.
 
 ## Before production
 

@@ -1,9 +1,11 @@
 import os
 from datetime import date
-from fastapi import FastAPI, Depends, HTTPException, Query
+from fastapi import FastAPI, Depends, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import func, or_
+from sqlalchemy.exc import SQLAlchemyError
 from dotenv import load_dotenv
 from .database import Base, engine, get_db
 from . import models, schemas
@@ -13,6 +15,17 @@ load_dotenv()
 app = FastAPI(title="Pharmacy Inventory & Prescription API", version="1.0.0")
 origins = os.getenv("CORS_ORIGINS", "http://localhost:5173").split(",")
 app.add_middleware(CORSMiddleware, allow_origins=origins, allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
+
+
+@app.exception_handler(SQLAlchemyError)
+def database_error(request: Request, exc: SQLAlchemyError):
+    # A database outage should be a readable 503, not an unhandled 500 with a
+    # stack trace leaking into the response.
+    print(f"[database] {exc.__class__.__name__}: {exc}", flush=True)
+    return JSONResponse(
+        status_code=503,
+        content={"detail": "Database unavailable. Check DATABASE_URL and that MySQL is running."},
+    )
 
 def _seed_database():
     Base.metadata.create_all(bind=engine)
@@ -121,8 +134,8 @@ def root():
     return {
         "service": "Pharmacy Inventory & Prescription API",
         "status": "online",
-        "docs": "http://localhost:8000/docs",
-        "frontend": "http://localhost:5173"
+        "docs": "/docs",
+        "health": "/api/health"
     }
 
 @app.get("/api/health")
